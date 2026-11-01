@@ -142,6 +142,17 @@ const ui = {
   gpuGroup: $("#gpuGroup"),
   openModelsFolder: $("#openModelsFolder"),
   modelList: $("#modelList"),
+  engineBuildList: $("#engineBuildList"),
+  ffmpegList: $("#ffmpegList"),
+  modelDownloadList: $("#modelDownloadList"),
+  installSummary: $("#installSummary"),
+  downloadProgress: $("#downloadProgress"),
+  downloadProgressBar: $("#downloadProgressBar"),
+  downloadProgressText: $("#downloadProgressText"),
+  downloadProgressTime: $("#downloadProgressTime"),
+  cancelDownloadButton: $("#cancelDownloadButton"),
+  openEngineFolder: $("#openEngineFolder"),
+  refreshCatalog: $("#refreshCatalog"),
   customServerPath: $("#customServerPath"),
   customModelPath: $("#customModelPath"),
   customFfmpegPath: $("#customFfmpegPath"),
@@ -205,6 +216,7 @@ let models = [];
 let devices = [];
 let historyEntries = [];
 let activeTab = "dictation";
+let tabTouched = false;
 let onboardingShown = false;
 let hotkeyModalOpen = false;
 let captureModifiers = [];
@@ -218,6 +230,9 @@ let currentFileText = "";
 let fileProgressActive = false;
 let fileStageTimer = null;
 let refreshDevicesBusy = false;
+let downloadJob = null;
+let downloadJobId = "";
+let downloadProgress = null;
 
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, (character) => {
@@ -509,7 +524,7 @@ function renderModels(initial = false) {
 
   if (!list.length) {
     ui.modelList.innerHTML =
-      '<div class="empty-inline">Модели не найдены. Откройте папку моделей и добавьте файл ggml-*.bin.</div>';
+      '<div class="empty-inline">Моделей ещё нет. Скачайте их кнопкой «Скачать» выше или положите файл ggml-*.bin в папку моделей.</div>';
   } else {
     ui.modelList.innerHTML = list
       .map((model) => {
@@ -689,11 +704,161 @@ function renderAbout() {
     .join("");
 }
 
+async function refreshCatalog() {
+  const info = await api.downloadCatalog();
+  if (!info) return;
+  snapshot = { ...snapshot, downloads: info };
+  renderInstalls();
+}
+
+function startDownload({ kind, id, label }) {
+  if (downloadJob) {
+    showToast("Уже идёт скачивание. Дождитесь окончания или отмените его.", "error");
+    return;
+  }
+  downloadJob = { kind, label };
+  downloadJobId = id;
+  downloadProgress = null;
+  renderInstalls();
+  const run = kind === "engine" ? api.installEngine(id) : kind === "ffmpeg" ? api.installFfmpeg() : api.installModel(id);
+  run
+    .then((result) => {
+      if (!result?.ok) {
+        showToast(result?.error || "Скачивание не удалось.", "error");
+        return;
+      }
+      return refreshCatalog().then(() => api.getState()).then((data) => applySnapshot(data));
+    })
+    .catch((error) => showToast(error?.message || "Скачивание не удалось.", "error"))
+    .finally(() => {
+      downloadJob = null;
+      downloadJobId = "";
+      refreshCatalog();
+    });
+}
+
+function formatSpeed(bytesPerSecond) {
+  const perSecond = (Number(bytesPerSecond) || 0) / 1048576;
+  return `${perSecond.toFixed(1)} МБ/с`;
+}
+
+function updateDownloadProgress(payload) {
+  if (!payload || !ui.downloadProgress) return;
+  downloadProgress = payload;
+  downloadJob = downloadJob || { kind: payload.kind, label: "Скачивание" };
+  downloadJobId = payload.id || downloadJobId;
+  ui.downloadProgress.hidden = false;
+  const percent = Math.max(0, Math.min(100, Number(payload.percent) || 0));
+  ui.downloadProgressBar.style.width = `${percent.toFixed(1)}%`;
+  const received = formatBytes(payload.received || 0);
+  const total = payload.total ? formatBytes(payload.total) : "—";
+  ui.downloadProgressText.textContent =
+    payload.stage === "extract" ? "Распаковка движка…" : `${received} / ${total}`;
+  ui.downloadProgressTime.textContent =
+    payload.stage === "extract" ? "" : `${percent.toFixed(0)}% · ${formatSpeed(payload.bytesPerSecond)}`;
+}
+
+function renderInstalls() {
+  const info = snapshot?.downloads;
+  if (!info || !ui.engineBuildList) return;
+  const catalog = info.catalog || {};
+  const job = info.job || downloadJob;
+
+  const engineInstalled = catalog.engine?.installed;
+  const engineExternal = catalog.engine?.external;
+  const models = catalog.models || [];
+  const readyModels = models.filter((model) => model.installed);
+  const parts = [
+    engineInstalled
+      ? `движок: ${engineInstalled.kind === "cuda" ? "CUDA" : "CPU"}`
+      : engineExternal
+        ? `движок ${engineExternal.kind === "cuda" ? "CUDA" : "CPU"} уже найден в ${engineExternal.label}`
+        : "движок не установлен — нажмите «Скачать»",
+    `моделей на диске: ${readyModels.length}`,
+    catalog.ffmpeg?.installed || catalog.ffmpeg?.availableElsewhere ? "FFmpeg есть" : "FFmpeg нет (нужен для файлов)",
+  ];
+  ui.installSummary.textContent = parts.join(" · ") + ".";
+
+  ui.engineBuildList.innerHTML = (catalog.engine?.builds || [])
+    .map((build) => {
+      const isCurrent = engineInstalled && engineInstalled.binary.toLowerCase().includes(build.id === "cuda" ? "cuda" : "x64.exe");
+      const busy = job && job.kind === "engine" && downloadJobId === build.id;
+      return `<div class="install-item${isCurrent ? " is-done" : ""}">
+        <div class="install-item-copy">
+          <strong>${escapeHtml(build.label)}</strong>
+          <small>${escapeHtml(build.description)}</small>
+        </div>
+        <div class="install-item-foot">
+          <span class="install-size">${escapeHtml(build.sizeLabel)} архив · ~${escapeHtml(build.diskLabel)} на диске</span>
+          <button class="button ${isCurrent ? "ghost" : "primary"}" data-install-engine="${escapeHtml(build.id)}" ${busy ? "disabled" : ""}>
+            ${isCurrent ? "Установлен" : busy ? "Скачивается…" : "Скачать"}
+          </button>
+        </div>
+      </div>`;
+    })
+    .join("");
+
+  const ffmpeg = catalog.ffmpeg || {};
+  const ffmpegBusy = job && job.kind === "ffmpeg";
+  ui.ffmpegList.innerHTML = ffmpeg.build
+    ? `<div class="install-item${ffmpeg.installed || ffmpeg.availableElsewhere ? " is-done" : ""}">
+        <div class="install-item-copy">
+          <strong>${escapeHtml(ffmpeg.build.label)}</strong>
+          <small>${escapeHtml(ffmpeg.build.description)}</small>
+        </div>
+        <div class="install-item-foot">
+          <span class="install-size">${escapeHtml(ffmpeg.build.sizeLabel)} архив${ffmpeg.availableElsewhere && !ffmpeg.installed ? " · найден в системе" : ""}</span>
+          <button class="button ${ffmpeg.installed || ffmpeg.availableElsewhere ? "ghost" : "primary"}" data-install-ffmpeg="1" ${ffmpegBusy ? "disabled" : ""}>
+            ${ffmpegBusy ? "Скачивается…" : ffmpeg.installed ? "Перескачать" : ffmpeg.availableElsewhere ? "Скачать свою копию" : "Скачать"}
+          </button>
+        </div>
+      </div>`
+    : "";
+
+  ui.modelDownloadList.innerHTML = models
+    .map((model) => {
+      const busy = job && job.kind === "model" && downloadJobId === model.id;
+      const badges = [];
+      if (model.recommended) badges.push("по умолчанию");
+      if (model.englishOnly) badges.push("только английский");
+      const note = `${model.sizeLabel}${badges.length ? " · " + badges.join(" · ") : ""}`;
+      return `<div class="install-item${model.installed ? " is-done" : ""}">
+        <div class="install-item-copy">
+          <strong>${escapeHtml(model.label)}</strong>
+          <small>${escapeHtml(model.description)}</small>
+          <small class="install-size">${escapeHtml(note)}</small>
+        </div>
+        <div class="install-item-foot">
+          ${model.installed ? '<span class="install-badge">на диске</span>' : '<span class="install-size"></span>'}
+          <button class="button ${model.installed ? "ghost" : "primary"}" data-install-model="${escapeHtml(model.id)}" ${busy ? "disabled" : ""}>
+            ${busy ? "Скачивается…" : model.installed ? "Перескачать" : "Скачать"}
+          </button>
+        </div>
+      </div>`;
+    })
+    .join("");
+
+  const running = !!job;
+  ui.downloadProgress.hidden = !running;
+  if (running) {
+    ui.cancelDownloadButton.disabled = false;
+    if (!downloadProgress) {
+      ui.downloadProgressBar.style.width = "0%";
+      ui.downloadProgressText.textContent = job.label;
+      ui.downloadProgressTime.textContent = "Подключение…";
+    }
+  } else {
+    downloadProgress = null;
+    downloadJobId = "";
+  }
+}
+
 function renderAll(initial = false) {
   renderChrome();
   renderStatus();
   renderDictation(initial);
   renderModels(initial);
+  renderInstalls();
   renderHistory();
   renderAbout();
   renderBanners();
@@ -715,9 +880,10 @@ function applySnapshot(next, initial = false) {
   if (snapshot.firstRun && !onboardingShown) showOnboarding();
 }
 
-function setTab(tab) {
+function setTab(tab, { sticky = false } = {}) {
   if (!PAGE_META[tab]) return;
   activeTab = tab;
+  if (sticky) tabTouched = true;
   ui.navItems.forEach((item) => item.classList.toggle("is-active", item.dataset.tab === tab));
   ui.panels.forEach((panel) => panel.classList.toggle("is-active", panel.dataset.panel === tab));
   updatePageHeading();
@@ -1246,7 +1412,7 @@ async function clearHistoryEntries() {
 }
 
 function bindEvents() {
-  ui.navItems.forEach((item) => item.addEventListener("click", () => setTab(item.dataset.tab)));
+  ui.navItems.forEach((item) => item.addEventListener("click", () => setTab(item.dataset.tab, { sticky: true })));
   ui.hotkeyChip.addEventListener("click", openHotkeyModal);
   ui.changeHotkeyButton.addEventListener("click", openHotkeyModal);
   ui.recordButton.addEventListener("click", handleRecordClick);
@@ -1284,6 +1450,38 @@ function bindEvents() {
   });
 
   ui.openModelsFolder.addEventListener("click", () => api.openModelsFolder());
+
+  ui.engineBuildList.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-install-engine]");
+    if (!button || button.disabled) return;
+    startDownload({ kind: "engine", id: button.dataset.installEngine, label: "Движок Whisper" });
+  });
+
+  ui.ffmpegList.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-install-ffmpeg]");
+    if (!button || button.disabled) return;
+    startDownload({ kind: "ffmpeg", id: "ffmpeg", label: "FFmpeg" });
+  });
+
+  ui.modelDownloadList.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-install-model]");
+    if (!button || button.disabled) return;
+    startDownload({ kind: "model", id: button.dataset.installModel, label: `Модель ${button.dataset.installModel}` });
+  });
+
+  ui.cancelDownloadButton.addEventListener("click", async () => {
+    ui.cancelDownloadButton.disabled = true;
+    await api.cancelDownload();
+    ui.downloadProgressText.textContent = "Отмена…";
+  });
+
+  ui.openEngineFolder.addEventListener("click", () => api.openEngineFolder());
+
+  ui.refreshCatalog.addEventListener("click", async () => {
+    ui.refreshCatalog.disabled = true;
+    await refreshCatalog();
+    ui.refreshCatalog.disabled = false;
+  });
   ui.restartEngine.addEventListener("click", async () => {
     ui.restartEngine.disabled = true;
     const result = await api.restartEngine();
@@ -1368,12 +1566,12 @@ function bindEvents() {
     const action = button.dataset.bannerAction;
     if (action === "hotkey") openHotkeyModal();
     if (action === "logs") {
-      setTab("models");
+      setTab("models", { sticky: true });
       loadLog();
       api.openLogs();
     }
-    if (action === "models") setTab("models");
-    if (action === "about") setTab("about");
+    if (action === "models") setTab("models", { sticky: true });
+    if (action === "about") setTab("about", { sticky: true });
   });
 
   ui.pathList.addEventListener("click", async (event) => {
@@ -1416,27 +1614,35 @@ function bindEvents() {
 }
 
 function renderLanguageOptions() {
-  ui.languageSelect.innerHTML = LANGUAGES.map(
-    ([value, label]) => `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`
-  ).join("");
+  const popular = ["auto", "ru", "en", "ja"];
+  const option = ([value, label]) => `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`;
+  const rest = LANGUAGES.filter(([value]) => !popular.includes(value));
+  ui.languageSelect.innerHTML =
+    `<optgroup label="Часто используемые">${popular
+      .map((value) => option(LANGUAGES.find((entry) => entry[0] === value)))
+      .join("")}</optgroup>` +
+    `<optgroup label="Остальные языки">${rest.map(option).join("")}</optgroup>`;
 }
 
 async function init() {
   renderLanguageOptions();
   bindEvents();
+  // Сначала подписки, затем запрос состояния: иначе первый снапшот может не дойти.
+  api.onState((next) => applySnapshot(next));
+  api.onToast((payload) => showToast(payload?.message, payload?.kind));
+  api.onTab((tab) => setTab(tab, { sticky: true }));
+  api.onLevel((payload) => setLevel(payload?.level));
+  api.onFileProgress((progress) => updateFileProgress(progress));
+  api.onDownloadProgress((progress) => updateDownloadProgress(progress));
+  api.ready();
+
   try {
     const data = await api.getState();
     applySnapshot(data, true);
-    setTab(activeTab);
+    if (!tabTouched) setTab(activeTab);
   } catch (error) {
     showToast(error?.message || "Не удалось загрузить настройки.", "error");
   }
-
-  api.onState((next) => applySnapshot(next));
-  api.onToast((payload) => showToast(payload?.message, payload?.kind));
-  api.onTab((tab) => setTab(tab));
-  api.onLevel((payload) => setLevel(payload?.level));
-  api.onFileProgress((progress) => updateFileProgress(progress));
 
   try {
     const list = await api.getDevices();

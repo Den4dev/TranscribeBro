@@ -9,6 +9,7 @@ function subscribe(channel, callback) {
 
 contextBridge.exposeInMainWorld("transcribeBro", {
   getState: () => ipcRenderer.invoke("settings:get-state"),
+  ready: () => ipcRenderer.send("settings:ready"),
   updateSettings: (partial) => ipcRenderer.invoke("settings:update", partial),
   suspendHotkeys: () => ipcRenderer.invoke("settings:suspend-hotkeys"),
   resumeHotkeys: () => ipcRenderer.invoke("settings:resume-hotkeys"),
@@ -22,7 +23,12 @@ contextBridge.exposeInMainWorld("transcribeBro", {
   choosePath: (options) => ipcRenderer.invoke("settings:choose-path", options),
   transcribeFile: (filePath) => ipcRenderer.invoke("settings:transcribe-file", filePath),
   getHistory: (query) => ipcRenderer.invoke("settings:get-history", query),
-  deleteHistory: (id) => ipcRenderer.invoke("settings:delete-history", id),
+  downloadCatalog: () => ipcRenderer.invoke("downloads:catalog"),
+  installEngine: (buildId) => ipcRenderer.invoke("downloads:install-engine", buildId),
+  installFfmpeg: () => ipcRenderer.invoke("downloads:install-ffmpeg"),
+  installModel: (modelId) => ipcRenderer.invoke("downloads:install-model", modelId),
+  cancelDownload: () => ipcRenderer.invoke("downloads:cancel"),
+  openEngineFolder: () => ipcRenderer.invoke("downloads:open-engine-folder"),  deleteHistory: (id) => ipcRenderer.invoke("settings:delete-history", id),
   clearHistory: () => ipcRenderer.invoke("settings:clear-history"),
   restartEngine: () => ipcRenderer.invoke("settings:restart-engine"),
   stopEngine: () => ipcRenderer.invoke("settings:stop-engine"),
@@ -47,4 +53,5 @@ contextBridge.exposeInMainWorld("transcribeBro", {
   onTab: (callback) => subscribe("settings:tab", callback),
   onLevel: (callback) => subscribe("settings:level", callback),
   onFileProgress: (callback) => subscribe("settings:file-progress", callback),
+  onDownloadProgress: (callback) => subscribe("downloads:progress", callback),
 });

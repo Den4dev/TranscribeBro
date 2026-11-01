@@ -277,6 +277,7 @@
                 <div class="field">
                   <label for="languageSelect">Язык</label>
                   <select id="languageSelect"></select>
+                  <p class="hint">«Автоопределение» — все языки сразу. Выберите язык явно, если в речи только один: так точнее и быстрее. Английские модели (.en) читают только английский.</p>
                 </div>
 
                 <div class="field">
@@ -415,6 +416,44 @@
                 <button class="button ghost" id="stopEngine">Остановить</button>
                 <button class="button ghost" id="openLogsButton">Открыть логи</button>
               </div>
+            </section>
+
+            <section class="card install-card">
+              <header class="card-head">
+                <div>
+                  <h3>Скачать движок и модель</h3>
+                  <p id="installSummary">Ничего устанавливать не нужно — всё скачается прямо здесь.</p>
+                </div>
+                <span class="card-icon"><svg class="icon"><use href="#i-cube"></use></svg></span>
+              </header>
+
+              <div class="install-group">
+                <h4 class="install-title">Движок и кодеки</h4>
+                <div class="install-grid" id="engineBuildList"></div>
+                <div class="install-grid" id="ffmpegList" style="margin-top: 8px"></div>
+              </div>
+
+              <div class="install-group">
+                <h4 class="install-title">Модели распознавания</h4>
+                <div class="install-grid" id="modelDownloadList"></div>
+              </div>
+
+              <div class="file-progress" id="downloadProgress" hidden>
+                <div class="progress-track"><span id="downloadProgressBar"></span></div>
+                <div class="progress-copy">
+                  <span id="downloadProgressText">Скачивание…</span>
+                  <span id="downloadProgressTime"></span>
+                </div>
+                <div class="install-actions">
+                  <button class="button ghost" id="cancelDownloadButton">Отменить скачивание</button>
+                </div>
+              </div>
+
+              <div class="install-actions">
+                <button class="button ghost" id="openEngineFolder">Папка движка</button>
+                <button class="button ghost" id="refreshCatalog">Обновить список</button>
+              </div>
+              <p class="hint">Движок — официальный релиз whisper.cpp, модели — с Hugging Face. Скачивание продолжается в фоне, окно можно закрыть.</p>
             </section>
 
             <div class="grid two">

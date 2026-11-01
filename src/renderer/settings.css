@@ -2653,6 +2653,89 @@ input[type="range"] {
   }
 }
 
+.install-group {
+  margin-top: 14px;
+}
+
+.install-title {
+  margin: 0 0 8px;
+  color: var(--faint);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.install-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(238px, 1fr));
+  gap: 8px;
+}
+
+.install-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 11px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(6, 11, 17, 0.42);
+}
+
+.install-item.is-done {
+  border-color: rgba(94, 234, 212, 0.28);
+  background: rgba(94, 234, 212, 0.055);
+}
+
+.install-item-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.install-item-copy strong {
+  color: var(--text-soft);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.install-item-copy small {
+  color: var(--faint);
+  font-size: 10.5px;
+  line-height: 1.45;
+}
+
+.install-item-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.install-size {
+  color: var(--faint);
+  font-size: 10.5px;
+  white-space: nowrap;
+}
+
+.install-badge {
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(94, 234, 212, 0.14);
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.install-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

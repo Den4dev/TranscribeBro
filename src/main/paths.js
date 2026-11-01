@@ -72,10 +72,12 @@ function openWhisprAppDataBin() {
 
 function resolveWhisperServers() {
   const bundled = getBundledBinDir();
+  const userBin = path.join(getUserDataDir(), "bin");
   const appDataBin = openWhisprAppDataBin();
   const programDirs = programFilesCandidates().filter((p) => p.endsWith("bin"));
   const cuda = uniqueExisting([
     path.join(bundled, "whisper-server-win32-x64-cuda.exe"),
+    path.join(userBin, "whisper-server-win32-x64-cuda.exe"),
     path.join(appDataBin, "whisper-server-win32-x64-cuda.exe"),
     ...programDirs.map((d) => path.join(d, "whisper-server-win32-x64-cuda.exe")),
   ]).map((binary) => ({ kind: "cuda", binary, dir: path.dirname(binary) }));
@@ -83,6 +85,8 @@ function resolveWhisperServers() {
   const cpu = uniqueExisting([
     path.join(bundled, "whisper-server-win32-x64.exe"),
     path.join(bundled, "whisper-server", "whisper-server-win32-x64.exe"),
+    path.join(userBin, "whisper-server-win32-x64.exe"),
+    path.join(userBin, "whisper-server.exe"),
     ...programDirs.map((d) => path.join(d, "whisper-server-win32-x64.exe")),
     path.join(appDataBin, "whisper-server-win32-x64.exe"),
   ]).map((binary) => ({ kind: "cpu", binary, dir: path.dirname(binary) }));
@@ -110,9 +114,11 @@ function resolveKeyListener() {
 
 function resolveFfmpeg() {
   const bundled = getBundledBinDir();
+  const userBin = path.join(getUserDataDir(), "bin");
   const unpackedFfmpegDirs = programFilesCandidates().filter((p) => p.includes("ffmpeg-static"));
   return uniqueExisting([
     path.join(bundled, "ffmpeg.exe"),
+    path.join(userBin, "ffmpeg.exe"),
     ...unpackedFfmpegDirs.map((d) => path.join(d, "ffmpeg.exe")),
     ...programFilesCandidates().filter((p) => p.endsWith("bin")).map((d) => path.join(d, "ffmpeg.exe")),
   ])[0] || null;

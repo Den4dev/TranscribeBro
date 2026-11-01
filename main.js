@@ -23,11 +23,17 @@ const { WhisperEngine } = require("./src/main/engine");
 const { HotkeyManager } = require("./src/main/hotkey");
 const { captureTarget, pasteText } = require("./src/main/paste");
 const { HistoryStore } = require("./src/main/history");
+const { Downloader } = require("./src/main/downloads");
 const paths = require("./src/main/paths");
 
 const APP_ID = "com.transcribebro.app";
 const IS_SMOKE = process.argv.includes("--smoke-test");
-const IS_SCREENSHOT = process.argv.includes("--screenshot");
+const IS_SCREENSHOT = process.argv.some((arg) => arg === "--screenshot" || arg.startsWith("--screenshot="));
+// --screenshot=<tab> — снятие конкретного раздела настроек.
+const SCREENSHOT_TAB =
+  (process.argv.find((arg) => arg.startsWith("--screenshot=")) || "").split("=")[1] ||
+  process.env.TB_SCREENSHOT_TAB ||
+  null;
 const IS_HIDDEN_START = process.argv.includes("--hidden");
 
 app.commandLine.appendSwitch("autoplay-policy", "no-user-gesture-required");
@@ -44,6 +50,7 @@ let settings = null;
 let engine = null;
 let hotkeys = null;
 let history = null;
+let downloader = null;
 let tray = null;
 let trayIconIdle = null;
 let trayIconRecording = null;
@@ -70,6 +77,7 @@ let lastStateSaveAt = 0;
 let openWhisprCheckAt = 0;
 let showSettingsOnReady = false;
 let pendingSettingsTab = null;
+let settingsRendererReady = false;
 
 let state = {
   phase: "idle",
@@ -96,6 +104,16 @@ function sendToSettings(channel, payload) {
   if (!settingsWindow || settingsWindow.isDestroyed()) return;
   if (settingsWindow.webContents.isLoading()) return;
   settingsWindow.webContents.send(channel, payload);
+}
+
+// Рендерер подписывается на события не сразу, поэтому вкладку из трея или
+// командной строки держим в pendingSettingsTab до сигнала готовности.
+function flushPendingSettingsTab() {
+  if (!pendingSettingsTab || !settingsRendererReady) return;
+  if (!settingsWindow || settingsWindow.isDestroyed()) return;
+  // Без проверки isLoading: рендерер подписывается до окончания загрузки страницы.
+  settingsWindow.webContents.send("settings:tab", pendingSettingsTab);
+  pendingSettingsTab = null;
 }
 
 function sendToOverlay(channel, payload) {
@@ -132,6 +150,7 @@ function buildState() {
     engine: engine ? engine.getStatus() : null,
     hotkey: hotkeys ? hotkeys.getStatus() : null,
     models: paths.listModels(),
+    downloads: downloader ? { catalog: downloader.catalog(), job: downloader.getStatus() } : null,
     devices: cachedDevices,
     history: history ? history.list({ limit: 80 }) : [],
     paths: {
@@ -276,13 +295,12 @@ function createSettingsWindow() {
     },
   });
   settingsWindow.setMenuBarVisibility(false);
+  settingsWindow.webContents.on("did-start-loading", () => {
+    settingsRendererReady = false;
+  });
   settingsWindow.loadFile(path.join(__dirname, "src", "renderer", "settings.html"));
   settingsWindow.webContents.on("did-finish-load", () => {
     sendStateToSettings();
-    if (pendingSettingsTab) {
-      sendToSettings("settings:tab", pendingSettingsTab);
-      pendingSettingsTab = null;
-    }
     if (showSettingsOnReady) {
       showSettingsOnReady = false;
       settingsWindow.show();
@@ -320,11 +338,7 @@ function showSettings(tab) {
   }
   if (tab) {
     pendingSettingsTab = tab;
-    setTimeout(() => {
-      if (!pendingSettingsTab) return;
-      sendToSettings("settings:tab", pendingSettingsTab);
-      pendingSettingsTab = null;
-    }, 150);
+    flushPendingSettingsTab();
   }
   sendStateToSettings();
   requestDevices().then((devices) => {
@@ -923,6 +937,66 @@ async function transcribeFile(filePath) {
 
 function setupIpc() {
   ipcMain.handle("settings:get-state", () => buildState());
+  // Рендерер подписывается на события не сразу: без этого сигнала вкладка из
+  // трея могла прийти раньше, чем окно начало её слушать.
+  ipcMain.on("settings:ready", () => {
+    settingsRendererReady = true;
+    sendStateToSettings();
+    flushPendingSettingsTab();
+  });
+  ipcMain.handle("downloads:catalog", () =>
+    downloader ? { catalog: downloader.catalog(), job: downloader.getStatus() } : null
+  );
+  ipcMain.handle("downloads:install-engine", async (_event, buildId) => {
+    if (!downloader) return { ok: false, error: "Загрузка недоступна" };
+    try {
+      const result = await downloader.installEngine(String(buildId || "cpu"));
+      showToast("Движок Whisper установлен", "success");
+      sendStateToSettings();
+      return { ok: true, ...result };
+    } catch (error) {
+      logger?.warn("Engine download failed", { error: error.message });
+      return { ok: false, error: error.message };
+    }
+  });
+  ipcMain.handle("downloads:install-ffmpeg", async () => {
+    if (!downloader) return { ok: false, error: "Загрузка недоступна" };
+    try {
+      const result = await downloader.installFfmpeg();
+      showToast("FFmpeg установлен — транскрипция файлов доступна", "success");
+      sendStateToSettings();
+      return { ok: true, ...result };
+    } catch (error) {
+      logger?.warn("FFmpeg download failed", { error: error.message });
+      return { ok: false, error: error.message };
+    }
+  });
+  ipcMain.handle("downloads:install-model", async (_event, modelId) => {
+    if (!downloader) return { ok: false, error: "Загрузка недоступна" };
+    try {
+      const result = await downloader.installModel(String(modelId || ""));
+      if (settings) {
+        settings.model = String(modelId).toLowerCase();
+        config.saveSettings(userDataDir, settings);
+      }
+      if (engine && engine.ready) {
+        await engine.restart().catch((error) => logger?.warn("Engine restart after model install failed", { error: error.message }));
+      }
+      showToast(`Модель ${modelId} установлена и выбрана`, "success");
+      sendStateToSettings();
+      return { ok: true, ...result };
+    } catch (error) {
+      logger?.warn("Model download failed", { error: error.message });
+      return { ok: false, error: error.message };
+    }
+  });
+  ipcMain.handle("downloads:cancel", () => (downloader ? downloader.cancel() : { ok: false }));
+  ipcMain.handle("downloads:open-engine-folder", async () => {
+    if (!downloader) return false;
+    fs.mkdirSync(downloader.engineDir, { recursive: true });
+    shell.openPath(downloader.engineDir);
+    return true;
+  });
   ipcMain.handle("settings:update", (_event, partial) => updateSettings(partial));
   ipcMain.handle("settings:suspend-hotkeys", () => {
     hotkeys?.suspend();
@@ -1130,6 +1204,12 @@ async function bootstrap() {
 
   history = new HistoryStore({ userDataDir, logger });
   engine = new WhisperEngine({ logger, settingsProvider: () => settings, userDataDir });
+  downloader = new Downloader({
+    userDataDir,
+    paths,
+    logger,
+    onProgress: (payload) => sendToSettings("downloads:progress", payload),
+  });
 
   if (IS_SMOKE) {
     await runSmokeTest();
@@ -1192,7 +1272,7 @@ async function bootstrap() {
     process.argv.includes("--dev") ||
     IS_SCREENSHOT;
   if (shouldShow && !(IS_HIDDEN_START && settings.onboarded)) {
-    showSettings();
+    showSettings(SCREENSHOT_TAB);
   }
 
   if (IS_SCREENSHOT) {
