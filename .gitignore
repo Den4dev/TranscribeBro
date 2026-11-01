@@ -1,0 +1,10 @@
+node_modules/
+dist/
+dist_installer/
+out/
+*.log
+.DS_Store
+Thumbs.db
+
+# локальный .NET-лаунчер для ярлыка на рабочем столе (исходников нет)
+TranscribeBro.exe

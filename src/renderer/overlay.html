@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Оверлей TranscribeBro</title>
+    <link rel="stylesheet" href="overlay.css" />
+  </head>
+  <body>
+    <svg class="icon-sprite" aria-hidden="true">
+      <symbol id="o-mic" viewBox="0 0 24 24">
+        <rect x="9" y="3" width="6" height="11" rx="3" />
+        <path d="M5 11a7 7 0 0 0 14 0" />
+        <path d="M12 18v3" />
+        <path d="M8 21h8" />
+      </symbol>
+      <symbol id="o-check" viewBox="0 0 24 24">
+        <path d="m4 12 5 5L20 6" />
+      </symbol>
+      <symbol id="o-warning" viewBox="0 0 24 24">
+        <path d="M12 3 2.5 20h19Z" />
+        <path d="M12 9v5" />
+        <path d="M12 17h.01" />
+      </symbol>
+      <symbol id="o-wave" viewBox="0 0 24 24">
+        <path d="M4 10v4" />
+        <path d="M8 6v12" />
+        <path d="M12 3v18" />
+        <path d="M16 7v10" />
+        <path d="M20 10v4" />
+      </symbol>
+    </svg>
+
+    <main class="overlay" id="overlay" data-phase="idle" aria-live="polite" aria-atomic="true">
+      <section class="card" id="card">
+        <div class="accent-line" aria-hidden="true"></div>
+        <div class="orb" aria-hidden="true">
+          <span class="orb-halo"></span>
+          <span class="orb-core">
+            <svg class="orb-icon" id="orbIcon"><use href="#o-mic"></use></svg>
+          </span>
+        </div>
+
+        <div class="copy">
+          <div class="eyebrow-row">
+            <span class="eyebrow" id="eyebrow">ДИКТОВКА</span>
+            <span class="eyebrow-dot" aria-hidden="true"></span>
+            <span class="timer" id="timer">0:00</span>
+          </div>
+          <div class="title-row">
+            <h1 class="title" id="title">Готово к работе</h1>
+            <span class="engine-pill" id="enginePill" hidden></span>
+          </div>
+          <p class="message" id="message">Нажмите горячую клавишу, чтобы начать диктовку.</p>
+        </div>
+
+        <div class="visual" aria-hidden="true">
+          <div class="bars" id="bars"></div>
+          <div class="spinner" id="spinner"></div>
+          <span class="result-icon" id="resultIcon">
+            <svg><use href="#o-check" id="resultUse"></use></svg>
+          </span>
+        </div>
+      </section>
+
+      <div class="footer" id="footer">
+        <span class="footer-key" id="hotkeyHint">Ctrl + Win</span>
+        <span class="footer-label" id="hotkeyAction">чтобы начать</span>
+      </div>
+    </main>
+
+    <script src="overlay.js"></script>
+  </body>
+</html>

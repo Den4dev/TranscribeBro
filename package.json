@@ -1,0 +1,53 @@
+{
+  "name": "transcribe-bro",
+  "version": "1.0.0",
+  "description": "Local Whisper dictation with a global hotkey and automatic paste",
+  "main": "main.js",
+  "private": true,
+  "author": "TranscribeBro",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "dist": "electron-builder --win nsis",
+    "smoke": "electron . --smoke-test",
+    "screenshot": "electron . --screenshot"
+  },
+  "devDependencies": {
+    "electron": "^43.8.3",
+    "electron-builder": "^26.4.0"
+  },
+  "build": {
+    "appId": "com.transcribebro.app",
+    "productName": "TranscribeBro",
+    "files": [
+      "main.js",
+      "preload.js",
+      "src/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "bin",
+        "to": "bin"
+      },
+      {
+        "from": "src/assets",
+        "to": "assets"
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "src/assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "TranscribeBro",
+      "artifactName": "TranscribeBro-${version}-Setup.exe"
+    }
+  }
+}

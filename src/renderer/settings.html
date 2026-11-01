@@ -1,0 +1,712 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>TranscribeBro</title>
+    <link rel="stylesheet" href="settings.css" />
+  </head>
+  <body data-phase="idle">
+    <svg class="icon-sprite" aria-hidden="true">
+      <symbol id="i-mic" viewBox="0 0 24 24">
+        <rect x="9" y="3" width="6" height="11" rx="3" />
+        <path d="M5 11a7 7 0 0 0 14 0" />
+        <path d="M12 18v3" />
+        <path d="M8 21h8" />
+      </symbol>
+      <symbol id="i-sliders" viewBox="0 0 24 24">
+        <path d="M4 7h10" /><path d="M18 7h2" /><circle cx="16" cy="7" r="2" />
+        <path d="M4 17h2" /><path d="M10 17h10" /><circle cx="8" cy="17" r="2" />
+        <path d="M4 12h16" /><circle cx="12" cy="12" r="2" />
+      </symbol>
+      <symbol id="i-cube" viewBox="0 0 24 24">
+        <path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z" />
+        <path d="m4 7.5 8 4.5 8-4.5" />
+        <path d="M12 12v9" />
+      </symbol>
+      <symbol id="i-history" viewBox="0 0 24 24">
+        <path d="M3 12a9 9 0 1 0 3-6.7" />
+        <path d="M3 4v5h5" />
+        <path d="M12 7v5l3 2" />
+      </symbol>
+      <symbol id="i-file" viewBox="0 0 24 24">
+        <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z" />
+        <path d="M14 3v5h5" />
+        <path d="M9 13h6" /><path d="M9 17h4" />
+      </symbol>
+      <symbol id="i-info" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 11v5" /><path d="M12 8h.01" />
+      </symbol>
+      <symbol id="i-key" viewBox="0 0 24 24">
+        <circle cx="8" cy="15" r="4" />
+        <path d="m11 12 8-8" /><path d="m16 7 2 2" /><path d="m13 10 2 2" />
+      </symbol>
+      <symbol id="i-refresh" viewBox="0 0 24 24">
+        <path d="M20 7v5h-5" /><path d="M4 17v-5h5" />
+        <path d="M6.1 8A7 7 0 0 1 18.5 7" />
+        <path d="M17.9 16A7 7 0 0 1 5.5 17" />
+      </symbol>
+      <symbol id="i-folder" viewBox="0 0 24 24">
+        <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
+      </symbol>
+      <symbol id="i-copy" viewBox="0 0 24 24">
+        <rect x="8" y="8" width="12" height="12" rx="2" />
+        <path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3" />
+      </symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24">
+        <path d="M4 7h16" /><path d="M9 7V4h6v3" />
+        <path d="m6 7 1 13h10l1-13" /><path d="M10 11v5" /><path d="M14 11v5" />
+      </symbol>
+      <symbol id="i-save" viewBox="0 0 24 24">
+        <path d="M5 3h12l3 3v15H4V3Z" />
+        <path d="M8 3v6h8V3" /><path d="M8 21v-7h8v7" />
+      </symbol>
+      <symbol id="i-close" viewBox="0 0 24 24">
+        <path d="m6 6 12 12" /><path d="m18 6-12 12" />
+      </symbol>
+      <symbol id="i-check" viewBox="0 0 24 24">
+        <path d="m4 12 5 5L20 6" />
+      </symbol>
+      <symbol id="i-warning" viewBox="0 0 24 24">
+        <path d="M12 3 2.5 20h19Z" /><path d="M12 9v5" /><path d="M12 17h.01" />
+      </symbol>
+      <symbol id="i-play" viewBox="0 0 24 24">
+        <path d="m8 5 11 7-11 7Z" />
+      </symbol>
+      <symbol id="i-stop" viewBox="0 0 24 24">
+        <rect x="6" y="6" width="12" height="12" rx="2" />
+      </symbol>
+      <symbol id="i-chevron" viewBox="0 0 24 24">
+        <path d="m6 9 6 6 6-6" />
+      </symbol>
+      <symbol id="i-sparkle" viewBox="0 0 24 24">
+        <path d="m12 3 1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8Z" />
+        <path d="M19 16v4" /><path d="M17 18h4" />
+      </symbol>
+      <symbol id="i-volume" viewBox="0 0 24 24">
+        <path d="M11 5 6 9H3v6h3l5 4Z" />
+        <path d="M15 9a4 4 0 0 1 0 6" /><path d="M18 6a8 8 0 0 1 0 12" />
+      </symbol>
+      <symbol id="i-monitor" viewBox="0 0 24 24">
+        <rect x="3" y="4" width="18" height="13" rx="2" />
+        <path d="M8 21h8" /><path d="M12 17v4" />
+      </symbol>
+      <symbol id="i-terminal" viewBox="0 0 24 24">
+        <rect x="3" y="4" width="18" height="16" rx="2" />
+        <path d="m7 9 3 3-3 3" /><path d="M13 15h4" />
+      </symbol>
+      <symbol id="i-external" viewBox="0 0 24 24">
+        <path d="M14 4h6v6" /><path d="M20 4 11 13" />
+        <path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" />
+      </symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" />
+      </symbol>
+      <symbol id="i-search" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" />
+      </symbol>
+      <symbol id="i-arrow-right" viewBox="0 0 24 24">
+        <path d="M5 12h14" /><path d="m13 6 6 6-6 6" />
+      </symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24">
+        <path d="M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6Z" />
+        <path d="m9 12 2 2 4-4" />
+      </symbol>
+      <symbol id="i-zap" viewBox="0 0 24 24">
+        <path d="M13 2 4 14h7l-1 8 9-12h-7Z" />
+      </symbol>
+      <symbol id="i-globe" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M3 12h18" />
+        <path d="M12 3a14 14 0 0 1 0 18" />
+        <path d="M12 3a14 14 0 0 0 0 18" />
+      </symbol>
+    </svg>
+
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">
+            <svg viewBox="0 0 32 32" aria-hidden="true">
+              <path d="M7 18v-4" /><path d="M12 22V10" /><path d="M17 26V6" /><path d="M22 21V11" /><path d="M27 18v-4" />
+            </svg>
+          </div>
+          <div class="brand-copy">
+            <span class="brand-name">TranscribeBro</span>
+            <span class="brand-sub">локальная диктовка</span>
+          </div>
+        </div>
+
+        <nav class="nav" aria-label="Разделы">
+          <button class="nav-item is-active" data-tab="dictation">
+            <svg class="icon"><use href="#i-mic"></use></svg>
+            <span>Диктовка</span>
+          </button>
+          <button class="nav-item" data-tab="models">
+            <svg class="icon"><use href="#i-cube"></use></svg>
+            <span>Локальные модели</span>
+          </button>
+          <button class="nav-item" data-tab="history">
+            <svg class="icon"><use href="#i-history"></use></svg>
+            <span>История</span>
+          </button>
+          <button class="nav-item" data-tab="files">
+            <svg class="icon"><use href="#i-file"></use></svg>
+            <span>Файлы</span>
+          </button>
+          <button class="nav-item" data-tab="about">
+            <svg class="icon"><use href="#i-info"></use></svg>
+            <span>О программе</span>
+          </button>
+        </nav>
+
+        <div class="sidebar-footer">
+          <div class="engine-mini" id="engineMini">
+            <span class="status-dot" id="engineMiniDot"></span>
+            <div class="engine-mini-copy">
+              <span id="engineMiniTitle">Движок остановлен</span>
+              <span id="engineMiniSub">Запустится при диктовке</span>
+            </div>
+          </div>
+          <div class="sidebar-bottom">
+            <span id="versionLabel">v1.0.0</span>
+            <button class="icon-button" id="quitButton" title="Выйти из TranscribeBro" aria-label="Выйти из TranscribeBro">
+              <svg class="icon"><use href="#i-close"></use></svg>
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div class="page-heading">
+            <h1 id="pageTitle">Диктовка</h1>
+            <p id="pageSubtitle">Говорите естественно. TranscribeBro вставит текст в активное приложение.</p>
+          </div>
+          <div class="topbar-actions">
+            <div class="save-status" id="saveStatus">
+              <svg class="icon"><use href="#i-check"></use></svg>
+              <span>Сохранено</span>
+            </div>
+            <div class="status-pill" id="statusPill">
+              <span class="status-dot" id="statusDot"></span>
+              <span id="statusText">Готово</span>
+            </div>
+            <button class="hotkey-chip" id="hotkeyChip" title="Изменить горячую клавишу диктовки">
+              <svg class="icon"><use href="#i-key"></use></svg>
+              <span class="hotkey-chip-label">Клавиша</span>
+              <span class="hotkey-chip-keys" id="hotkeyChipKeys"></span>
+            </button>
+          </div>
+        </header>
+
+        <div class="banner-stack" id="bannerStack"></div>
+
+        <div class="content">
+          <section class="tab-panel is-active" data-panel="dictation">
+            <section class="hero-card">
+              <div class="hero-copy">
+                <span class="eyebrow"><span class="eyebrow-dot"></span>ЛОКАЛЬНАЯ ДИКТОВКА WHISPER</span>
+                <h2>Говорите — текст появится.</h2>
+                <p class="hero-lead">
+                  Нажмите сочетание клавиш, говорите естественно, затем нажмите снова. Текст появится в приложении, которое сейчас активно.
+                </p>
+                <div class="hero-actions">
+                  <button class="button primary" id="recordButton">
+                    <span class="button-icon" id="recordButtonIcon">
+                      <svg class="icon"><use href="#i-mic"></use></svg>
+                    </span>
+                    <span id="recordButtonLabel">Начать диктовку</span>
+                  </button>
+                  <button class="button ghost" id="changeHotkeyButton">Изменить клавишу</button>
+                </div>
+                <div class="level-row">
+                  <span class="level-label">Уровень</span>
+                  <div class="level-meter"><span id="levelBar"></span></div>
+                  <span class="level-device" id="deviceLabel">Микрофон по умолчанию</span>
+                </div>
+              </div>
+              <div class="hero-visual">
+                <div class="orb" id="dictationOrb">
+                  <span class="orb-ring ring-one"></span>
+                  <span class="orb-ring ring-two"></span>
+                  <span class="orb-core">
+                    <svg class="icon"><use href="#i-mic"></use></svg>
+                  </span>
+                </div>
+                <div class="orb-caption">
+                  <span class="orb-keys" id="heroHotkey"></span>
+                  <span class="orb-mode" id="heroMode">Переключение</span>
+                </div>
+              </div>
+            </section>
+
+            <div class="grid two">
+              <section class="card">
+                <header class="card-head">
+                  <div>
+                    <h3>Как вставляется текст</h3>
+                    <p>Выберите, куда вставлять текст и как работает сочетание клавиш.</p>
+                  </div>
+                  <span class="card-icon"><svg class="icon"><use href="#i-arrow-right"></use></svg></span>
+                </header>
+
+                <div class="field">
+                  <label>Куда вставлять</label>
+                  <div class="segmented" id="pasteTargetGroup">
+                    <button type="button" data-value="current">Текущее окно</button>
+                    <button type="button" data-value="captured">Где начали</button>
+                  </div>
+                  <p class="hint">«Текущее окно» — вставка после распознавания. «Где начали» — возврат в окно, активное при нажатии клавиши.</p>
+                </div>
+
+                <div class="field">
+                  <label>Активация</label>
+                  <div class="segmented" id="activationGroup">
+                    <button type="button" data-value="toggle">Нажатие переключает</button>
+                    <button type="button" data-value="push-to-talk">Удерживать для речи</button>
+                  </div>
+                  <p class="hint">Режим удержания лучше работает с сочетанием из одного модификатора, например Right Ctrl.</p>
+                </div>
+
+                <div class="field">
+                  <label for="languageSelect">Язык</label>
+                  <select id="languageSelect"></select>
+                </div>
+
+                <div class="field">
+                  <label for="deviceSelect">Микрофон</label>
+                  <div class="input-row">
+                    <select id="deviceSelect"></select>
+                    <button class="icon-button" id="refreshDevices" title="Обновить список микрофонов" aria-label="Обновить список микрофонов">
+                      <svg class="icon"><use href="#i-refresh"></use></svg>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="field">
+                  <div class="field-label-row">
+                    <label for="maxDuration">Максимальная длина записи</label>
+                    <span class="value-label" id="maxDurationValue">5 мин</span>
+                  </div>
+                  <input type="range" id="maxDuration" min="10" max="1800" step="10" />
+                </div>
+              </section>
+
+              <section class="card">
+                <header class="card-head">
+                  <div>
+                    <h3>Звук и поведение</h3>
+                    <p>Небольшие настройки, которые делают диктовку мгновенной.</p>
+                  </div>
+                  <span class="card-icon"><svg class="icon"><use href="#i-sliders"></use></svg></span>
+                </header>
+
+                <div class="toggle-list">
+                  <label class="toggle-row">
+                    <span class="toggle-copy"><strong>Улучшение микрофона</strong><small>Подавление шума, эхоподавление и автоматическое усиление.</small></span>
+                    <input type="checkbox" class="toggle-input" id="enhanceAudio" />
+                    <span class="switch"></span>
+                  </label>
+                  <label class="toggle-row">
+                    <span class="toggle-copy"><strong>Держать микрофон готовым</strong><small>Снижает задержку запуска и сохраняет короткий пре-ролл.</small></span>
+                    <input type="checkbox" class="toggle-input" id="keepMicWarm" />
+                    <span class="switch"></span>
+                  </label>
+                  <label class="toggle-row">
+                    <span class="toggle-copy"><strong>Добавлять пробел в конце</strong><small>Готово к следующему предложению после вставки.</small></span>
+                    <input type="checkbox" class="toggle-input" id="addTrailingSpace" />
+                    <span class="switch"></span>
+                  </label>
+                  <label class="toggle-row">
+                    <span class="toggle-copy"><strong>Звуковые сигналы</strong><small>Мягкие сигналы при начале и остановке записи.</small></span>
+                    <input type="checkbox" class="toggle-input" id="playSounds" />
+                    <span class="switch"></span>
+                  </label>
+                  <label class="toggle-row">
+                    <span class="toggle-copy"><strong>Показывать плавающий статус</strong><small>Небольшая плашка над панелью задач во время работы.</small></span>
+                    <input type="checkbox" class="toggle-input" id="showOverlay" />
+                    <span class="switch"></span>
+                  </label>
+                  <label class="toggle-row">
+                    <span class="toggle-copy"><strong>Сохранять записи</strong><small>Хранить WAV-копию каждой диктовки в данных приложения.</small></span>
+                    <input type="checkbox" class="toggle-input" id="saveAudio" />
+                    <span class="switch"></span>
+                  </label>
+                  <label class="toggle-row">
+                    <span class="toggle-copy"><strong>Запускать при входе</strong><small>Запускаться свёрнутым в трей при входе в Windows.</small></span>
+                    <input type="checkbox" class="toggle-input" id="launchAtLogin" />
+                    <span class="switch"></span>
+                  </label>
+                </div>
+              </section>
+            </div>
+
+            <section class="card">
+              <header class="card-head">
+                <div>
+                  <h3>Подсказки для словаря</h3>
+                  <p>Имена, продукты, аббревиатуры или фразы, которые Whisper должен распознавать.</p>
+                </div>
+                <span class="card-icon"><svg class="icon"><use href="#i-sparkle"></use></svg></span>
+              </header>
+              <textarea id="customVocabulary" maxlength="8000" placeholder="TranscribeBro, Kubernetes, д-р Вебер, квартальный отчёт…"></textarea>
+              <div class="card-foot">
+                <span class="hint" id="vocabularyCount">0 / 8000</span>
+                <span class="save-hint" id="vocabularySaved">Изменения сохраняются автоматически</span>
+              </div>
+            </section>
+
+            <section class="card last-card" id="lastTranscriptCard" hidden>
+              <header class="card-head">
+                <div>
+                  <h3>Последняя транскрипция</h3>
+                  <p>Последний текст этой сессии, готов к копированию.</p>
+                </div>
+                <button class="link-button" id="copyLastTranscript">Копировать</button>
+              </header>
+              <p class="last-transcript" id="lastTranscriptText"></p>
+            </section>
+
+            <div class="flow-strip">
+              <div class="flow-step">
+                <span class="flow-number">01</span>
+                <div><strong>Нажмите</strong><small>Используйте глобальное сочетание в любом приложении.</small></div>
+              </div>
+              <div class="flow-divider"></div>
+              <div class="flow-step">
+                <span class="flow-number">02</span>
+                <div><strong>Говорите</strong><small>Говорите в обычном темпе, команды не нужны.</small></div>
+              </div>
+              <div class="flow-divider"></div>
+              <div class="flow-step">
+                <span class="flow-number">03</span>
+                <div><strong>Нажмите снова</strong><small>Whisper распознает и вставит текст.</small></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="tab-panel" data-panel="models">
+            <section class="card engine-card">
+              <div class="engine-head">
+                <div>
+                  <span class="eyebrow"><span class="eyebrow-dot"></span>ЛОКАЛЬНЫЙ ДВИЖОК</span>
+                  <h2>Whisper на этом ПК</h2>
+                  <p id="engineSummary">Аудио не покидает ваш компьютер. Движок запускается по необходимости.</p>
+                </div>
+                <div class="engine-state" id="engineState">
+                  <span class="status-dot"></span>
+                  <span id="engineStateText">Остановлен</span>
+                </div>
+              </div>
+              <div class="stat-grid">
+                <div class="stat"><span>Бэкенд</span><strong id="engineBackend">—</strong></div>
+                <div class="stat"><span>Устройство</span><strong id="engineDevice">—</strong></div>
+                <div class="stat"><span>Модель</span><strong id="engineModel">—</strong></div>
+                <div class="stat"><span>Порт</span><strong id="enginePort">—</strong></div>
+              </div>
+              <div class="engine-actions">
+                <button class="button primary" id="restartEngine">Перезапустить движок</button>
+                <button class="button ghost" id="stopEngine">Остановить</button>
+                <button class="button ghost" id="openLogsButton">Открыть логи</button>
+              </div>
+            </section>
+
+            <div class="grid two">
+              <section class="card">
+                <header class="card-head">
+                  <div>
+                    <h3>Производительность</h3>
+                    <p>Выберите бэкенд и держите движок готовым.</p>
+                  </div>
+                  <span class="card-icon"><svg class="icon"><use href="#i-zap"></use></svg></span>
+                </header>
+                <div class="field">
+                  <label>Режим GPU</label>
+                  <div class="segmented" id="gpuGroup">
+                    <button type="button" data-value="auto">Авто</button>
+                    <button type="button" data-value="cuda">CUDA</button>
+                    <button type="button" data-value="cpu">CPU</button>
+                  </div>
+                  <p class="hint">Авто сначала пробует CUDA, затем переключается на CPU.</p>
+                </div>
+                <div class="toggle-list">
+                  <label class="toggle-row">
+                    <span class="toggle-copy"><strong>Держать движок загруженным</strong><small>Быстрее первый звук. Занимает память GPU в простое.</small></span>
+                    <input type="checkbox" class="toggle-input" id="keepEngineLoaded" />
+                    <span class="switch"></span>
+                  </label>
+                  <label class="toggle-row">
+                    <span class="toggle-copy"><strong>Определение голосовой активности</strong><small>Обрезает тишину перед распознаванием. Требуется модель Silero VAD.</small></span>
+                    <input type="checkbox" class="toggle-input" id="vadEnabled" />
+                    <span class="switch"></span>
+                  </label>
+                </div>
+              </section>
+
+              <section class="card">
+                <header class="card-head">
+                  <div>
+                    <h3>Модель</h3>
+                    <p>Выберите баланс между скоростью и точностью.</p>
+                  </div>
+                  <button class="link-button" id="openModelsFolder">Открыть папку</button>
+                </header>
+                <div class="model-list" id="modelList"></div>
+                <p class="hint">Модели ищутся в папке TranscribeBro и кэше OpenWhispr.</p>
+              </section>
+            </div>
+
+            <details class="card advanced-card">
+              <summary>
+                <span><svg class="icon"><use href="#i-folder"></use></svg> Дополнительные пути</span>
+                <svg class="icon chevron"><use href="#i-chevron"></use></svg>
+              </summary>
+              <div class="advanced-body">
+                <div class="field">
+                  <label for="customServerPath">Свой whisper-server</label>
+                  <div class="input-row">
+                    <input type="text" id="customServerPath" placeholder="C:\path\to\whisper-server.exe" spellcheck="false" />
+                    <button class="icon-button" data-browse="server" title="Обзор" aria-label="Выбрать whisper-server">
+                      <svg class="icon"><use href="#i-folder"></use></svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="field">
+                  <label for="customModelPath">Своя модель</label>
+                  <div class="input-row">
+                    <input type="text" id="customModelPath" placeholder="C:\path\to\ggml-medium.bin" spellcheck="false" />
+                    <button class="icon-button" data-browse="model" title="Обзор" aria-label="Выбрать модель">
+                      <svg class="icon"><use href="#i-folder"></use></svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="field">
+                  <label for="customFfmpegPath">Свой FFmpeg</label>
+                  <div class="input-row">
+                    <input type="text" id="customFfmpegPath" placeholder="C:\path\to\ffmpeg.exe" spellcheck="false" />
+                    <button class="icon-button" data-browse="ffmpeg" title="Обзор" aria-label="Выбрать FFmpeg">
+                      <svg class="icon"><use href="#i-folder"></use></svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="advanced-actions">
+                  <button class="button primary small" id="applyAdvanced">Применить пути</button>
+                  <button class="button ghost small" id="clearAdvanced">Очистить</button>
+                </div>
+              </div>
+            </details>
+
+            <section class="card log-card">
+              <header class="card-head">
+                <div>
+                  <h3>Лог движка</h3>
+                  <p>Последние сообщения whisper-server и приложения.</p>
+                </div>
+                <button class="link-button" id="refreshLog">Обновить</button>
+              </header>
+              <pre class="log-view" id="logView">Загрузка лога…</pre>
+            </section>
+          </section>
+
+          <section class="tab-panel" data-panel="history">
+            <section class="card history-toolbar">
+              <div class="history-stats">
+                <div><strong id="historyTotal">0</strong><span>записей</span></div>
+                <div><strong id="historyWords">0</strong><span>слов</span></div>
+                <div><strong id="historyMinutes">0</strong><span>минут</span></div>
+              </div>
+              <div class="history-tools">
+                <div class="search-box">
+                  <svg class="icon"><use href="#i-search"></use></svg>
+                  <input type="search" id="historySearch" placeholder="Поиск по транскрипциям…" spellcheck="false" />
+                </div>
+                <button class="button danger ghost small" id="clearHistory">Очистить всё</button>
+              </div>
+            </section>
+            <div class="history-list" id="historyList"></div>
+          </section>
+
+          <section class="tab-panel" data-panel="files">
+            <section class="card file-card">
+              <div class="drop-zone" id="dropZone">
+                <div class="drop-icon"><svg class="icon"><use href="#i-file"></use></svg></div>
+                <h2>Перетащите аудио- или видеофайл</h2>
+                <p>Whisper распознает его локально. Ничего не загружается.</p>
+                <button class="button primary" id="chooseFileButton">Выбрать файл</button>
+                <span class="drop-formats">WAV, MP3, M4A, WEBM, OGG, FLAC, MP4, MKV, MOV</span>
+              </div>
+
+              <div class="file-selected" id="fileSelected" hidden>
+                <div class="file-badge"><svg class="icon"><use href="#i-file"></use></svg></div>
+                <div class="file-meta">
+                  <strong id="fileName">—</strong>
+                  <span id="filePath">—</span>
+                </div>
+                <button class="button primary" id="transcribeFileButton">Распознать</button>
+                <button class="icon-button" id="clearFileButton" title="Удалить файл" aria-label="Удалить файл">
+                  <svg class="icon"><use href="#i-close"></use></svg>
+                </button>
+              </div>
+
+              <div class="file-progress" id="fileProgress" hidden>
+                <div class="progress-track"><span id="fileProgressBar"></span></div>
+                <div class="progress-copy">
+                  <span id="fileProgressText">Подготовка аудио…</span>
+                  <span id="fileProgressTime"></span>
+                </div>
+              </div>
+
+              <div class="file-result" id="fileResult" hidden>
+                <div class="result-head">
+                  <h3>Транскрипция</h3>
+                  <div class="result-actions">
+                    <button class="button ghost small" id="copyFileText">
+                      <svg class="icon"><use href="#i-copy"></use></svg>Копировать
+                    </button>
+                    <button class="button ghost small" id="saveFileText">
+                      <svg class="icon"><use href="#i-save"></use></svg>Сохранить
+                    </button>
+                  </div>
+                </div>
+                <textarea id="fileTranscript" readonly spellcheck="false"></textarea>
+              </div>
+            </section>
+          </section>
+
+          <section class="tab-panel" data-panel="about">
+            <section class="card about-hero">
+              <div class="about-mark">
+                <svg viewBox="0 0 32 32" aria-hidden="true">
+                  <path d="M7 18v-4" /><path d="M12 22V10" /><path d="M17 26V6" /><path d="M22 21V11" /><path d="M27 18v-4" />
+                </svg>
+              </div>
+              <div class="about-copy">
+                <span class="eyebrow">TRANSCRIBEBRO</span>
+                <h2>Локальная диктовка для Windows</h2>
+                <p>Небольшое приложение в трее на базе Whisper, локального движка OpenWhispr и мгновенной вставки. Без аккаунта, облака и ботов для встреч.</p>
+                <div class="about-actions">
+                  <button class="button primary" id="openMicSettings">Настройки микрофона</button>
+                  <button class="button ghost" id="showWelcome">Показать приветствие</button>
+                  <button class="button ghost" id="aboutOpenLogs">Открыть логи</button>
+                </div>
+              </div>
+            </section>
+
+            <div class="grid two">
+              <section class="card">
+                <header class="card-head">
+                  <div><h3>Среда выполнения</h3><p>Версии и текущее состояние движка.</p></div>
+                  <span class="card-icon"><svg class="icon"><use href="#i-monitor"></use></svg></span>
+                </header>
+                <div class="info-list">
+                  <div class="info-row"><span>Версия приложения</span><strong id="aboutVersion">—</strong></div>
+                  <div class="info-row"><span>Electron</span><strong id="aboutElectron">—</strong></div>
+                  <div class="info-row"><span>Платформа</span><strong id="aboutPlatform">—</strong></div>
+                  <div class="info-row"><span>Горячая клавиша</span><strong id="aboutHotkey">—</strong></div>
+                  <div class="info-row"><span>Бэкенд</span><strong id="aboutBackend">—</strong></div>
+                  <div class="info-row"><span>Модель</span><strong id="aboutModel">—</strong></div>
+                </div>
+              </section>
+
+              <section class="card">
+                <header class="card-head">
+                  <div><h3>Конфиденциальность</h3><p>Всё остаётся на этом компьютере.</p></div>
+                  <span class="card-icon"><svg class="icon"><use href="#i-shield"></use></svg></span>
+                </header>
+                <ul class="plain-list">
+                  <li>Аудио записывается в память и отправляется только локальному whisper-server.</li>
+                  <li>Транскрипции хранятся в папке данных приложения и никогда не загружаются.</li>
+                  <li>Записи сохраняются, только если включено «Сохранять записи».</li>
+                  <li>Без телеметрии, аккаунтов и фоновых облачных запросов.</li>
+                </ul>
+              </section>
+            </div>
+
+            <section class="card">
+              <header class="card-head">
+                <div><h3>Локальные пути</h3><p>Полезные папки и вспомогательные файлы.</p></div>
+                <span class="card-icon"><svg class="icon"><use href="#i-folder"></use></svg></span>
+              </header>
+              <div class="path-list" id="pathList"></div>
+            </section>
+
+            <section class="card about-note">
+              <svg class="icon"><use href="#i-warning"></use></svg>
+              <div>
+                <strong>Совместимость с OpenWhispr</strong>
+                <p>TranscribeBro использует локальный whisper-server и Windows-хелперы OpenWhispr, если они доступны. Закройте OpenWhispr во время работы TranscribeBro, чтобы приложения не конфликтовали за одно глобальное сочетание клавиш.</p>
+                <div class="about-actions">
+                  <button class="button ghost small" id="openWhisprSite">Сайт OpenWhispr</button>
+                  <button class="button ghost small" id="quitAppButton">Выйти из TranscribeBro</button>
+                </div>
+              </div>
+            </section>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <div class="modal-backdrop" id="hotkeyModal" hidden>
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="hotkeyModalTitle">
+        <header class="modal-head">
+          <div>
+            <span class="eyebrow">СОЧЕТАНИЕ КЛАВИШ</span>
+            <h2 id="hotkeyModalTitle">Горячая клавиша диктовки</h2>
+          </div>
+          <button class="icon-button" id="closeHotkeyModal" title="Закрыть" aria-label="Закрыть">
+            <svg class="icon"><use href="#i-close"></use></svg>
+          </button>
+        </header>
+        <p class="modal-lead">Нажмите нужное сочетание клавиш. Используйте хотя бы один модификатор, F-клавишу или правый модификатор.</p>
+        <div class="hotkey-capture" id="hotkeyCapture" tabindex="0">
+          <span class="capture-keys" id="hotkeyCaptureKeys">Нажмите сочетание</span>
+          <small id="hotkeyCaptureHint">Esc — отмена</small>
+        </div>
+        <div class="modal-note">
+          <svg class="icon"><use href="#i-info"></use></svg>
+          <span>Сочетания только из модификаторов, например Right Ctrl, работают в режиме «Удерживать для речи».</span>
+        </div>
+        <div class="modal-actions">
+          <button class="button ghost" id="cancelHotkey">Отмена</button>
+          <button class="button primary" id="saveHotkey" disabled>Сохранить клавишу</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="onboardingModal" hidden>
+      <div class="modal onboarding" role="dialog" aria-modal="true" aria-labelledby="onboardingTitle">
+        <span class="eyebrow"><span class="eyebrow-dot"></span>ДОБРО ПОЖАЛОВАТЬ</span>
+        <h2 id="onboardingTitle">Говорите вместо того, чтобы печатать.</h2>
+        <p class="modal-lead">TranscribeBro — приложение в трее. Нажмите сочетание, говорите, нажмите снова — текст вставится в приложение, где вы работали.</p>
+        <div class="onboarding-steps">
+          <div class="onboarding-step">
+            <span class="step-number">1</span>
+            <div><strong>Задайте сочетание</strong><small>По умолчанию <span class="inline-keys" id="onboardingHotkey"></span>. Его можно изменить сейчас или позже.</small></div>
+          </div>
+          <div class="onboarding-step">
+            <span class="step-number">2</span>
+            <div><strong>Разрешите доступ к микрофону</strong><small>Windows может спросить один раз. Рекордер — скрытый локальный помощник.</small></div>
+          </div>
+          <div class="onboarding-step">
+            <span class="step-number">3</span>
+            <div><strong>Говорите и нажмите снова</strong><small>Whisper работает локально, затем транскрипция вставляется автоматически.</small></div>
+          </div>
+        </div>
+        <div class="onboarding-actions">
+          <button class="button ghost" id="onboardingChangeHotkey">Изменить клавишу</button>
+          <button class="button primary" id="finishOnboarding">Начать работу с TranscribeBro</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast-stack" id="toastStack"></div>
+
+    <script src="settings.js"></script>
+  </body>
+</html>
